@@ -216,3 +216,25 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# Research PDFs
+data/papers/*.pdf
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
