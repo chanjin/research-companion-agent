@@ -1,0 +1,46 @@
+# Research Companion Agent Specification
+
+## Mission
+연구자의 연구 질문을 이해하고,
+관련 문헌을 탐색·분석하여
+연구 의사결정을 지원한다.
+
+## World Model
+- Researcher
+- Research Question
+- Papers
+- Authors
+- Research Topics
+- Research History
+- Agent Memory
+
+## Jobs
+### Literature Scout
+관련 논문을 탐색하고 선별한다.
+
+### Paper Reader
+선택된 논문을 구조적으로 분석한다.
+
+### Research Analyst
+여러 논문을 비교하고 연구 동향과 gap을 찾는다.
+
+### Research Partner
+연구 질문, 가설, 실험 방향을 제안한다.
+
+## APF
+Observe
+→ Interpret
+→ Plan
+→ Act
+→ Evaluate
+→ Update Memory
+
+## Human-in-the-loop
+Agent는 분석과 제안을 수행하고
+최종 연구 판단은 연구자가 수행한다.
+
+## Initial Scope
+- Literature search
+- Paper analysis
+- Research synthesis
+- Research memory
