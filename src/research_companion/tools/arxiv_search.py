@@ -1,13 +1,10 @@
 import arxiv
 
 
-def search_arxiv(
-    query: str,
-    max_results: int = 10,
-) -> list[dict]:
+def search_arxiv( query: str,
+    max_results: int = 15,) -> list[dict]:
 
     client = arxiv.Client()
-
     search = arxiv.Search(
         query=query,
         max_results=max_results,
@@ -15,7 +12,6 @@ def search_arxiv(
     )
 
     papers = []
-
     for result in client.results(search):
         papers.append(
             {

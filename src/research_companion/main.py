@@ -1,29 +1,17 @@
 #from llm import ask_llm
-from agent import ResearchCompanionAgent
+from research_companion.agent import ResearchCompanionAgent
 
 def main():
-    #prompt = "연구 질문이란 무엇인지 간단히 설명해줘."
-    # prompt = """ 나는 AI Agent에 관한 연구를 시작하려고 한다. 이 연구 주제를 탐색하기 위해 고려할 수 있는 연구 질문 3개를 제안해줘."""
-
     agent = ResearchCompanionAgent()
 
-    # agent.research_topic = "AI Agents"
-    #agent.research_question = (
-    #    "How does persistent memory affect the performance of research agents?"
-    #)
-    #response = agent.run(
-    #    "현재 연구 질문을 평가하고 개선 방향을 제안해줘."
-    #)
-    #print(response)
-
     research_question = (
-        "How does episodic memory affect "
-        "the performance of autonomous AI agents?"
+        "에이전트를 고정된 절차적 워크플로우의 실행 노드가 아닌 명확한 직무 경계(Scope)와 책임을 가진 독립 주체로 정의할 때, 예기치 않은 시스템 오작동(월권 행동, 프롬프트 이탈)을 얼마나 효과적으로 통제할 수 있는가?"
     )
 
     state = agent.search_literature(
         research_question=research_question,
-        max_results=10,
+        max_results=15,
+        top_n=5,        
     )
 
     print("=" * 60)
@@ -34,23 +22,53 @@ def main():
     print()
 
     print("=" * 60)
-    print("Generated Search Query")
+    print("Search Query")
     print("=" * 60)
     print(state.search_query)
 
+
+    print("=" * 60)
+    print("Workflow Summary")
+    print("=" * 60)
+
     print()
 
+    print(
+        "Candidate Papers:",
+        len(state.candidate_papers),
+    )
+
+    print(
+        "After Deduplication:",
+        len(state.deduplicated_papers),
+    )
+
+    print(
+        "Evaluated Papers:",
+        len(state.evaluated_papers),
+    )
+
+    print(
+        "Selected Papers:",
+        len(state.selected_papers),
+    )
+
+    print()
+
+
     print("=" * 60)
-    print("Candidate Papers")
+    print("Selected Papers")
     print("=" * 60)
+
 
     for index, paper in enumerate(
-        state.candidate_papers,
+        state.selected_papers,
         start=1,
     ):
-
         print()
         print(f"[{index}] {paper['title']}")
+        print("Score:", paper["relevance_score"],  )
+        print("Reason:", paper["relevance_reason"],  )
 
         print(
             "Authors:",
@@ -70,16 +88,19 @@ def main():
     print()
 
     print("=" * 60)
-    print("Workflow State")
+    print("Specification Validation")
     print("=" * 60)
 
+
     print(
-        "Current Step:",
-        state.current_step
+        "Satisfied:",
+        state.specification_satisfied,
     )
 
-
-
+    print(
+        "Final Workflow State:",
+        state.current_step,
+    )
 
 if __name__ == "__main__":
     main()
