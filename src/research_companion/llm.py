@@ -4,14 +4,18 @@ import ollama
 
 MODEL = "gemma4:e4b"
 
-def ask_llm(prompt: str) -> str:
+def ask_llm(system_prompt: str, user_prompt: str) -> str:
     response = ollama.chat(
         model=MODEL,
         messages=[
             {
+                "role": "system",
+                "content": system_prompt,
+            },
+            {
                 "role": "user",
-                "content": prompt,
-            }
+                "content": user_prompt,
+            },
         ],
     )
 
