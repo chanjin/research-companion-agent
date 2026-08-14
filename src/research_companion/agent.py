@@ -46,23 +46,44 @@ Research Question:  {self.research_question  or "Not specified"}
         self, research_question: str, ) -> str:
 
         prompt = f"""
-# Task
-
-Generate an academic search query for the following
-research question.
+You are preparing a literature search strategy
+for an academic research question.
 
 # Research Question
 
 {research_question}
 
-# Requirements
+# Task
 
-- Identify the core academic concepts.
-- Use concise academic keywords.
-- Prefer English terminology suitable for arXiv search.
-- Do not explain your reasoning.
-- Return only the search query.
-    """.strip()
+Do NOT directly generate one Boolean query.
+
+1. Identify the major conceptual dimensions
+   of the research question.
+
+2. Identify academic synonyms and related
+   terminology for those concepts.
+
+3. Generate complementary search queries
+   with different levels of breadth.
+
+4. Include broad discovery queries and
+   narrower focused queries.
+
+# Search Strategy
+
+Avoid over-constraining queries with many
+AND operators.
+
+Prefer queries that maximize literature recall.
+
+# Output
+
+Return 6 academic search queries.
+
+Return one query per line.
+Do not number the queries.
+Do not provide explanations.
+"""
         
         return ask_llm(
             system_prompt=self.system_prompt,
