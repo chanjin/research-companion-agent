@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from research_companion.llm import ask_llm
+
 from research_companion.jobs.literature_scout import (
     LiteratureScout,
 )
@@ -12,6 +13,9 @@ from research_companion.jobs.paper_reader import (
 )
 from research_companion.jobs.research_analyst import (
     ResearchAnalyst,
+)
+from research_companion.jobs.research_partner import (
+    ResearchPartner,
 )
 
 
@@ -38,7 +42,8 @@ class ResearchCompanionAgent:
         # ===================================
 
         paper_reader_prompt_path = Path(
-            "prompts/paper_reader/analyze_paper.md"
+            "prompts/paper_reader/"
+            "analyze_paper.md"
         )
 
         self.paper_reader_prompt = (
@@ -58,6 +63,21 @@ class ResearchCompanionAgent:
 
         self.research_analyst_prompt = (
             research_analyst_prompt_path.read_text(
+                encoding="utf-8"
+            )
+        )
+
+        # ===================================
+        # Research Partner Specification
+        # ===================================
+
+        research_partner_prompt_path = Path(
+            "prompts/research_partner/"
+            "propose_research.md"
+        )
+
+        self.research_partner_prompt = (
+            research_partner_prompt_path.read_text(
                 encoding="utf-8"
             )
         )
@@ -85,6 +105,10 @@ class ResearchCompanionAgent:
             ResearchAnalyst(self)
         )
 
+        self.research_partner = (
+            ResearchPartner(self)
+        )
+
     # =======================================
     # Research Context
     # =======================================
@@ -96,6 +120,7 @@ class ResearchCompanionAgent:
     ) -> None:
 
         self.research_topic = topic
+
         self.research_question = (
             research_question
         )
@@ -153,7 +178,8 @@ for the research question below.
 
 # Instructions
 
-Do NOT generate one overly restrictive Boolean query.
+Do NOT generate one overly restrictive
+Boolean query.
 
 Generate complementary search queries covering
 different conceptual dimensions.
@@ -260,7 +286,9 @@ Do not include Markdown.
 
         try:
 
-            result = json.loads(response)
+            result = json.loads(
+                response
+            )
 
             score = int(
                 result["score"]
@@ -341,9 +369,13 @@ URL:
         )
 
         try:
-            return json.loads(response)
+
+            return json.loads(
+                response
+            )
 
         except json.JSONDecodeError:
+
             return {
                 "research_problem": (
                     "Failed to parse LLM response."
@@ -411,9 +443,13 @@ URL:
         )
 
         try:
-            return json.loads(response)
+
+            return json.loads(
+                response
+            )
 
         except json.JSONDecodeError:
+
             return {
                 "major_themes": [],
                 "common_problems": [],
@@ -424,6 +460,66 @@ URL:
                 "research_trends": [],
                 "research_gaps": [],
                 "implications_for_current_rq": [],
+            }
+
+    # =======================================
+    # Research Partner
+    # =======================================
+
+    def generate_research_proposal(
+        self,
+        research_question: str,
+        research_synthesis: dict,
+    ) -> dict:
+
+        synthesis_json = json.dumps(
+            research_synthesis,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+        user_prompt = f"""
+{self.research_partner_prompt}
+
+# Current Research Question
+
+{research_question}
+
+# Research Analyst Synthesis
+
+{synthesis_json}
+""".strip()
+
+        response = ask_llm(
+            system_prompt=self.system_prompt,
+            user_prompt=user_prompt,
+        )
+
+        try:
+
+            return json.loads(
+                response
+            )
+
+        except json.JSONDecodeError:
+
+            return {
+                "rq_assessment": {
+                    "assessment": (
+                        "needs_reframing"
+                    ),
+                    "reason": (
+                        "Failed to parse "
+                        "LLM response."
+                    ),
+                },
+                "selected_gaps": [],
+                "refined_research_questions": [],
+                "candidate_hypotheses": [],
+                "proposed_research_designs": [],
+                "evaluation_metrics": [],
+                "risks_and_assumptions": [],
+                "recommended_next_actions": [],
             }
 
     # =======================================
@@ -465,4 +561,15 @@ URL:
         return self.research_analyst.run(
             research_question=research_question,
             paper_analyses=paper_analyses,
+        )
+
+    def propose_research_direction(
+        self,
+        research_question: str,
+        research_synthesis: dict,
+    ):
+
+        return self.research_partner.run(
+            research_question=research_question,
+            research_synthesis=research_synthesis,
         )

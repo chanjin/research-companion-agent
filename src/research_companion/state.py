@@ -53,3 +53,18 @@ class ResearchAnalysisState:
     specification_satisfied: bool = False
 
     error: Optional[str] = None
+
+
+@dataclass
+class ResearchPartnerState:
+    research_question: str = ""
+
+    research_synthesis: dict = field(default_factory=dict)
+
+    proposal: dict = field(default_factory=dict)
+
+    current_step: str = ""
+
+    specification_satisfied: bool = False
+
+    error: Optional[str] = None
