@@ -5,7 +5,7 @@ from research_companion.agent import (
 )
 
 
-RESEARCH_QUESTION = (
+ORIGINAL_RESEARCH_QUESTION = (
     "에이전트를 고정된 절차적 워크플로우의 "
     "실행 노드가 아닌 명확한 직무 경계(Scope), "
     "책임(Responsibility), 권한(Authority)을 가진 "
@@ -15,22 +15,278 @@ RESEARCH_QUESTION = (
 )
 
 
-def print_episodes(
-    episodes,
-):
+def show_candidate_research_questions(
+    proposal: dict,
+) -> list[dict]:
+
+    candidates = proposal.get(
+        "refined_research_questions",
+        [],
+    )
 
     print()
     print("=" * 70)
-    print("EPISODIC MEMORY")
+    print("CANDIDATE RESEARCH QUESTIONS")
     print("=" * 70)
 
-    if not episodes:
+    for index, item in enumerate(
+        candidates,
+        start=1,
+    ):
 
+        print()
         print(
-            "No episodes found."
+            f"[{index}] {item.get('rq', '')}"
         )
 
+        print(
+            "Rationale:",
+            item.get(
+                "rationale",
+                "",
+            ),
+        )
+
+    return candidates
+
+
+def get_candidate_index(
+    candidates: list[dict],
+) -> int:
+
+    while True:
+
+        raw = input(
+            "\nSelect a candidate number: "
+        ).strip()
+
+        try:
+            selected = int(raw)
+
+        except ValueError:
+            print(
+                "Please enter a number."
+            )
+            continue
+
+        if (
+            selected < 1
+            or selected > len(candidates)
+        ):
+            print(
+                "Invalid candidate number."
+            )
+            continue
+
+        return selected - 1
+
+
+def get_decision() -> str:
+
+    valid = {
+        "approve",
+        "reject",
+        "revise",
+        "defer",
+    }
+
+    while True:
+
+        decision = input(
+            "\nDecision "
+            "(approve/reject/revise/defer): "
+        ).strip().lower()
+
+        if decision in valid:
+            return decision
+
+        print(
+            "Invalid decision."
+        )
+
+
+def demonstrate_human_decision():
+
+    agent = ResearchCompanionAgent()
+
+    agent.set_research_context(
+        topic="Job-bounded AI Agents",
+        research_question=(
+            ORIGINAL_RESEARCH_QUESTION
+        ),
+    )
+
+    # ===================================
+    # M10 실습에서는 Research Partner의
+    # 기존 결과가 있다고 가정한다.
+    #
+    # 실제 M8 pipeline 결과로 교체 가능하다.
+    # ===================================
+
+    example_proposal = {
+        "refined_research_questions": [
+            {
+                "rq": (
+                    "Do explicit Scope, "
+                    "Responsibility, and Authority "
+                    "boundaries reduce unauthorized "
+                    "actions in autonomous AI agents?"
+                ),
+                "rationale": (
+                    "This RQ focuses directly on "
+                    "measurable authority violations."
+                ),
+            },
+            {
+                "rq": (
+                    "How do job-bounded AI agents "
+                    "compare with fixed workflow-node "
+                    "agents in controlling scope "
+                    "violations and prompt deviation?"
+                ),
+                "rationale": (
+                    "This creates a direct architectural "
+                    "comparison."
+                ),
+            },
+            {
+                "rq": (
+                    "Which combinations of role, scope, "
+                    "and authority constraints most "
+                    "effectively reduce unintended "
+                    "agent behavior?"
+                ),
+                "rationale": (
+                    "This focuses on individual "
+                    "governance mechanisms."
+                ),
+            },
+        ]
+    }
+
+    candidates = (
+        show_candidate_research_questions(
+            example_proposal
+        )
+    )
+
+    if not candidates:
+        print(
+            "No candidates available."
+        )
         return
+
+    candidate_index = (
+        get_candidate_index(
+            candidates
+        )
+    )
+
+    selected_candidate = (
+        candidates[
+            candidate_index
+        ]
+    )
+
+    original_content = (
+        selected_candidate[
+            "rq"
+        ]
+    )
+
+    decision_value = (
+        get_decision()
+    )
+
+    revised_content = None
+
+    if decision_value == "revise":
+
+        revised_content = input(
+            "\nEnter revised research question:\n> "
+        ).strip()
+
+    reason = input(
+        "\nReason for this decision:\n> "
+    ).strip()
+
+    # ===================================
+    # Human Decision 생성 및 적용
+    # ===================================
+
+    decision = (
+        agent.make_research_decision(
+            decision_type="rq_selection",
+            target_type="research_question",
+            decision=decision_value,
+            original_content=(
+                original_content
+            ),
+            revised_content=(
+                revised_content
+            ),
+            reason=reason,
+        )
+    )
+
+    # ===================================
+    # 결과 출력
+    # ===================================
+
+    print()
+    print("=" * 70)
+    print("RESEARCH DECISION")
+    print("=" * 70)
+
+    print(
+        "Decision:",
+        decision.decision,
+    )
+
+    print(
+        "Original:",
+        decision.original_content,
+    )
+
+    if decision.revised_content:
+
+        print(
+            "Revised:",
+            decision.revised_content,
+        )
+
+    print(
+        "Reason:",
+        decision.reason,
+    )
+
+    print()
+    print("=" * 70)
+    print("CURRENT RESEARCH CONTEXT")
+    print("=" * 70)
+
+    print(
+        "Current RQ:"
+    )
+
+    print(
+        agent.research_question
+    )
+
+    # ===================================
+    # Memory 확인
+    # ===================================
+
+    print()
+    print("=" * 70)
+    print("RECENT EPISODIC MEMORY")
+    print("=" * 70)
+
+    episodes = (
+        agent.memory.recall(
+            limit=5
+        )
+    )
 
     for index, episode in enumerate(
         episodes,
@@ -39,169 +295,22 @@ def print_episodes(
 
         print()
         print(
-            f"[{index}] {episode.episode_type}"
+            f"[{index}] "
+            f"{episode.episode_type}"
         )
 
         print(
-            "Timestamp:",
-            episode.timestamp,
+            episode.summary
         )
 
         print(
-            "Summary:",
-            episode.summary,
-        )
-
-        print(
-            "Details:",
-            episode.details,
-        )
-
-        print(
-            "Importance:",
-            episode.importance,
+            episode.details
         )
 
 
 def main():
 
-    # =======================================
-    # Session 1
-    # =======================================
-
-    agent = ResearchCompanionAgent()
-
-    agent.set_research_context(
-        topic="Job-bounded AI Agents",
-        research_question=(
-            RESEARCH_QUESTION
-        ),
-    )
-
-    print()
-    print("=" * 70)
-    print("SESSION 1")
-    print("=" * 70)
-
-    # -----------------------------------
-    # 연구자의 중요한 결정 저장
-    # -----------------------------------
-
-    episode = (
-        agent.remember_research_event(
-            episode_type=(
-                "research_decision"
-            ),
-            summary=(
-                "Focus on Scope, "
-                "Responsibility, and Authority."
-            ),
-            details=(
-                "The researcher decided to focus "
-                "on explicit job boundaries rather "
-                "than prompt-level guardrails alone."
-            ),
-            research_question=(
-                RESEARCH_QUESTION
-            ),
-            source="researcher",
-            importance=5,
-        )
-    )
-
-    print()
-    print(
-        "Stored Episode:"
-    )
-
-    print(
-        episode.summary
-    )
-
-    # -----------------------------------
-    # RQ refinement decision
-    # -----------------------------------
-
-    agent.remember_research_event(
-        episode_type="rq_revision",
-        summary=(
-            "Compare workflow-node agents "
-            "with job-bounded agents."
-        ),
-        details=(
-            "The proposed experiment will compare "
-            "a fixed workflow-node architecture "
-            "against an agent architecture with "
-            "explicit Scope, Responsibility, "
-            "and Authority boundaries."
-        ),
-        research_question=(
-            RESEARCH_QUESTION
-        ),
-        source="researcher",
-        importance=5,
-    )
-
-    # =======================================
-    # Session 종료를 흉내 낸다.
-    # 새로운 Agent 객체 생성
-    # =======================================
-
-    print()
-    print("=" * 70)
-    print("SESSION 2")
-    print("=" * 70)
-
-    new_agent = (
-        ResearchCompanionAgent()
-    )
-
-    new_agent.set_research_context(
-        topic="Job-bounded AI Agents",
-        research_question=(
-            RESEARCH_QUESTION
-        ),
-    )
-
-    # -----------------------------------
-    # Persistent Memory Recall
-    # -----------------------------------
-
-    episodes = (
-        new_agent
-        .recall_research_memory(
-            research_question=(
-                RESEARCH_QUESTION
-            ),
-            limit=5,
-        )
-    )
-
-    print_episodes(
-        episodes
-    )
-
-    # -----------------------------------
-    # Recall된 기억을 LLM Context에 사용
-    # -----------------------------------
-
-    print()
-    print("=" * 70)
-    print("MEMORY-AWARE AGENT RESPONSE")
-    print("=" * 70)
-
-    response = new_agent.run(
-        (
-            "지난 연구 결정에 맞추어 "
-            "다음 연구 단계에서 가장 먼저 "
-            "해야 할 일을 제안해줘."
-        )
-    )
-
-    print()
-    print(
-        response
-    )
+    demonstrate_human_decision()
 
 
 if __name__ == "__main__":

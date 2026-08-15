@@ -22,6 +22,13 @@ from research_companion.memory.service import (
     MemoryService,
 )
 
+from research_companion.decisions.service import (
+    DecisionService,
+)
+from research_companion.decisions.models import (
+    ResearchDecision,
+)
+
 
 class ResearchCompanionAgent:
 
@@ -34,14 +41,10 @@ class ResearchCompanionAgent:
         # Static Agent Specification
         # ===================================
 
-        system_prompt_path = Path(
+        self.system_prompt = Path(
             "prompts/system_prompt.md"
-        )
-
-        self.system_prompt = (
-            system_prompt_path.read_text(
-                encoding="utf-8"
-            )
+        ).read_text(
+            encoding="utf-8"
         )
 
         # ===================================
@@ -87,6 +90,14 @@ class ResearchCompanionAgent:
         )
 
         # ===================================
+        # Human Decision Layer
+        # ===================================
+
+        self.decisions = DecisionService(
+            memory_service=self.memory
+        )
+
+        # ===================================
         # Jobs
         # ===================================
 
@@ -122,7 +133,7 @@ class ResearchCompanionAgent:
         )
 
     # =======================================
-    # Episodic Memory Interface
+    # Episodic Memory
     # =======================================
 
     def remember_research_event(
@@ -159,6 +170,72 @@ class ResearchCompanionAgent:
                 or self.research_question
             ),
             limit=limit,
+        )
+
+    # =======================================
+    # Human Decision Interface
+    # =======================================
+
+    def make_research_decision(
+        self,
+        decision_type: str,
+        target_type: str,
+        decision: str,
+        original_content: str,
+        revised_content: str | None = None,
+        reason: str = "",
+    ) -> ResearchDecision:
+        """
+        연구자의 Human Decision을 생성하고
+        Episodic Memory에 저장한다.
+        """
+
+        result = (
+            self.decisions.process_decision(
+                decision_type=decision_type,
+                target_type=target_type,
+                decision=decision,
+                original_content=original_content,
+                revised_content=revised_content,
+                reason=reason,
+                research_question=(
+                    self.research_question
+                ),
+            )
+        )
+
+        self.apply_research_decision(
+            result
+        )
+
+        return result
+
+    def apply_research_decision(
+        self,
+        decision: ResearchDecision,
+    ) -> None:
+        """
+        Human Decision을 현재 Research Context에 반영한다.
+
+        M10에서는 우선 Research Question에 대해서만
+        실제 Context 변경을 적용한다.
+        """
+
+        if (
+            decision.target_type
+            != "research_question"
+        ):
+            return
+
+        final_content = (
+            decision.final_content
+        )
+
+        if final_content is None:
+            return
+
+        self.research_question = (
+            final_content
         )
 
     # =======================================
@@ -235,24 +312,16 @@ Literature Scout
 
 # Task
 
-Prepare an academic literature search strategy.
+Generate six complementary academic
+search queries.
 
-Generate complementary search queries covering
-different conceptual dimensions.
+Use broad discovery queries and
+focused queries.
 
-Avoid excessive AND operators.
-
-Prefer high recall.
-
-# Required Output
-
-Return exactly 6 search queries.
+Avoid excessive Boolean restrictions.
 
 Return one query per line.
-
 Do not number the queries.
-
-Do not provide explanations.
 """.strip()
 
         response = ask_llm(
@@ -274,7 +343,9 @@ Do not provide explanations.
             ).strip()
 
             if query:
-                queries.append(query)
+                queries.append(
+                    query
+                )
 
         return queries[:6]
 
@@ -288,10 +359,6 @@ Do not provide explanations.
 # Current Job
 
 Literature Scout
-
-# Current Workflow Step
-
-Evaluate Paper Relevance
 
 # Research Question
 
@@ -407,6 +474,7 @@ URL:
         )
 
         try:
+
             return json.loads(
                 response
             )
@@ -480,12 +548,9 @@ URL:
         )
 
         try:
-            return json.loads(
-                response
-            )
+            return json.loads(response)
 
         except json.JSONDecodeError:
-
             return {
                 "major_themes": [],
                 "common_problems": [],
@@ -530,7 +595,7 @@ URL:
 
 {research_question}
 
-# Relevant Past Research Experience
+# Relevant Researcher Decisions
 
 {memory_context}
 
@@ -545,6 +610,7 @@ URL:
         )
 
         try:
+
             return json.loads(
                 response
             )
