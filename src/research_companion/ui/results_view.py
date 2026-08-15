@@ -145,45 +145,45 @@ def render_literature_results(
             )
 
             st.write(
-                "Score:",
-                paper.get(
-                    "relevance_score",
-                    "",
-                ),
+                f"Score: {paper.get(
+                                    "relevance_score",
+                                    "",
+                                )}",
+                
             )
 
             st.write(
-                "Reason:",
-                paper.get(
-                    "relevance_reason",
-                    "",
-                ),
+                f"Reason: { paper.get(
+                                    "relevance_reason",
+                                    "",
+                                ),}",
+               
             )
 
             st.write(
-                "Authors:",
-                ", ".join(
-                    paper.get(
-                        "authors",
-                        [],
-                    )
-                ),
+                f"Authors: {", ".join(
+                                    paper.get(
+                                        "authors",
+                                        [],
+                                    )
+                                ),}"
+                
             )
 
             st.write(
-                "Published:",
-                paper.get(
+                f"Published: {paper.get(
                     "published",
                     "",
-                ),
+                ),}",
+
             )
 
             st.write(
-                "PDF:",
-                paper.get(
-                    "pdf_url",
-                    "",
-                ),
+                f"PDF: {paper.get(
+                                    "pdf_url",
+                                    "",
+                                ),}",
+                
             )
 
             st.divider()
@@ -413,19 +413,19 @@ def render_research_analysis(
             )
 
             st.write(
-                "**Evidence:**",
-                gap.get(
-                    "evidence",
-                    "",
-                ),
+                f"**Evidence:** {gap.get(
+                                    "evidence",
+                                    "",
+                                ),}",
+                
             )
 
             st.write(
-                "**Confidence:**",
-                gap.get(
-                    "confidence",
-                    "",
-                ),
+                f"**Confidence:**{gap.get(
+                                    "confidence",
+                                    "",
+                                ),}",
+                
             )
 
             st.divider()
@@ -466,19 +466,19 @@ def render_research_partner(
         )
 
         st.write(
-            "Assessment:",
-            rq_assessment.get(
-                "assessment",
-                "",
-            ),
+            f"Assessment: {rq_assessment.get(
+                            "assessment",
+                            "",
+                        ),}",
+            
         )
 
         st.write(
-            "Reason:",
-            rq_assessment.get(
-                "reason",
-                "",
-            ),
+            f"Reason: { rq_assessment.get(
+                            "reason",
+                            "",
+                        ),}",
+           
         )
 
         st.markdown(

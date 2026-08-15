@@ -250,3 +250,9 @@ token.tk
 data/memory/*.db
 data/memory/*.sqlite
 data/memory/*.sqlite3
+
+
+# Agent run observability
+data/runs/*.db
+data/runs/*.sqlite
+data/runs/*.sqlite3

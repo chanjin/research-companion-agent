@@ -6,7 +6,6 @@ from research_companion.orchestration.orchestrator import (
     ResearchOrchestrator,
 )
 
-
 def make_search_state(
     satisfied=True,
     paper_count=3,
@@ -14,29 +13,49 @@ def make_search_state(
 
     papers = []
 
-    for index in range(
-        paper_count
-    ):
+    for index in range(paper_count):
 
         papers.append(
             {
-                "title": (
-                    f"Paper {index + 1}"
+                "title": f"Paper {index + 1}",
+                "authors": ["Test Author"],
+                "abstract": "Test abstract",
+                "published": "2026-01-01",
+                "url": (
+                    f"https://example.com/"
+                    f"{index + 1}"
                 ),
                 "pdf_url": (
                     f"https://example.com/"
                     f"{index + 1}.pdf"
                 ),
+                "relevance_score": 5,
+                "relevance_reason": "Relevant",
             }
         )
 
     return SimpleNamespace(
-        specification_satisfied=(
-            satisfied
-        ),
-        selected_papers=papers,
-    )
+        specification_satisfied=satisfied,
 
+        search_queries=[
+            "query 1",
+            "query 2",
+        ],
+
+        candidate_papers=papers.copy(),
+
+        deduplicated_papers=papers.copy(),
+
+        evaluated_papers=papers.copy(),
+
+        selected_papers=papers,
+
+        current_step=(
+            "complete"
+            if satisfied
+            else "needs_retry"
+        ),
+    )
 
 def make_reading_state(
     satisfied=True,
@@ -44,25 +63,61 @@ def make_reading_state(
 ):
 
     return SimpleNamespace(
-        specification_satisfied=(
-            satisfied
-        ),
+        paper={
+            "title": f"Paper {index}",
+            "pdf_url": (
+                f"https://example.com/"
+                f"{index}.pdf"
+            ),
+        },
+
         analysis={
             "research_problem": (
                 f"Problem {index}"
             ),
+            "research_gap": (
+                f"Gap {index}"
+            ),
+            "research_objective": (
+                f"Objective {index}"
+            ),
             "method": (
                 f"Method {index}"
+            ),
+            "dataset": (
+                f"Dataset {index}"
+            ),
+            "experiment": (
+                f"Experiment {index}"
             ),
             "results": (
                 f"Results {index}"
             ),
+            "contribution": (
+                f"Contribution {index}"
+            ),
             "limitations": (
                 f"Limitations {index}"
             ),
+            "relevance_to_current_rq": (
+                f"Relevance {index}"
+            ),
         },
-    )
 
+        current_step=(
+            "complete"
+            if satisfied
+            else "failed"
+        ),
+
+        specification_satisfied=satisfied,
+
+        error=(
+            None
+            if satisfied
+            else "Mock paper reading failure"
+        ),
+    )
 
 def make_analysis_state(
     satisfied=True,
@@ -72,10 +127,44 @@ def make_analysis_state(
         specification_satisfied=(
             satisfied
         ),
+
+        current_step=(
+            "complete"
+            if satisfied
+            else "needs_retry"
+        ),
+
+        error=None,
+
         synthesis={
             "major_themes": [
                 "Agent governance",
             ],
+
+            "common_problems": [
+                "Unauthorized behavior",
+            ],
+
+            "common_methods": [
+                "Policy constraints",
+            ],
+
+            "methodological_differences": [
+                "Static versus dynamic control",
+            ],
+
+            "common_findings": [
+                "Constraints reduce failures",
+            ],
+
+            "recurring_limitations": [
+                "Limited evaluation environments",
+            ],
+
+            "research_trends": [
+                "Runtime governance",
+            ],
+
             "research_gaps": [
                 {
                     "gap": (
@@ -86,12 +175,17 @@ def make_analysis_state(
                         "Existing systems focus "
                         "on prompt-level controls."
                     ),
-                    "confidence": "medium",
+                    "confidence": (
+                        "medium"
+                    ),
                 }
+            ],
+
+            "implications_for_current_rq": [
+                "Direct comparison may be useful."
             ],
         },
     )
-
 
 def make_partner_state(
     satisfied=True,
@@ -101,7 +195,42 @@ def make_partner_state(
         specification_satisfied=(
             satisfied
         ),
+
+        current_step=(
+            "complete"
+            if satisfied
+            else "needs_retry"
+        ),
+
+        error=None,
+
         proposal={
+            "rq_assessment": {
+                "assessment": (
+                    "reasonably_scoped"
+                ),
+                "reason": (
+                    "The question supports "
+                    "a measurable comparison."
+                ),
+            },
+
+            "selected_gaps": [
+                {
+                    "gap": (
+                        "Job-bounded agents "
+                        "remain underexplored."
+                    ),
+                    "why_relevant": (
+                        "Directly related "
+                        "to the current RQ."
+                    ),
+                    "confidence": (
+                        "medium"
+                    ),
+                }
+            ],
+
             "refined_research_questions": [
                 {
                     "rq": (
@@ -114,10 +243,58 @@ def make_partner_state(
                         "comparison."
                     ),
                 }
-            ]
+            ],
+
+            "candidate_hypotheses": [
+                {
+                    "hypothesis": (
+                        "Explicit authority "
+                        "boundaries reduce "
+                        "unauthorized actions."
+                    ),
+                    "related_rq": (
+                        "Do authority boundaries "
+                        "reduce unauthorized actions?"
+                    ),
+                    "testability": (
+                        "Compare violation rates."
+                    ),
+                }
+            ],
+
+            "proposed_research_designs": [
+                {
+                    "design": (
+                        "Controlled comparison"
+                    ),
+                    "independent_variables": [
+                        "Agent architecture"
+                    ],
+                    "dependent_variables": [
+                        "Unauthorized action rate"
+                    ],
+                    "comparison": (
+                        "Workflow vs job-bounded"
+                    ),
+                    "required_data": [
+                        "Execution logs"
+                    ],
+                }
+            ],
+
+            "evaluation_metrics": [
+                "Unauthorized action rate"
+            ],
+
+            "risks_and_assumptions": [
+                "Synthetic scenarios"
+            ],
+
+            "recommended_next_actions": [
+                "Define authority boundaries"
+            ],
         },
     )
-
 
 class FakeDecision:
 

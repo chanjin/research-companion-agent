@@ -5,6 +5,9 @@ import streamlit as st
 from research_companion.agent import (
     ResearchCompanionAgent,
 )
+from research_companion.observability.service import (
+    ObservabilityService,
+)
 from research_companion.orchestration.orchestrator import (
     ResearchOrchestrator,
 )
@@ -17,6 +20,9 @@ from research_companion.ui.research_view import (
 from research_companion.ui.results_view import (
     render_results_view,
 )
+from research_companion.ui.runs_view import (
+    render_runs_view,
+)
 
 
 def initialize_session_state():
@@ -28,17 +34,36 @@ def initialize_session_state():
         )
 
     if (
+        "observability"
+        not in st.session_state
+    ):
+
+        st.session_state.observability = (
+            ObservabilityService()
+        )
+
+    if (
         "orchestrator"
         not in st.session_state
     ):
 
         st.session_state.orchestrator = (
             ResearchOrchestrator(
-                st.session_state.agent
+                agent=(
+                    st.session_state
+                    .agent
+                ),
+                observability=(
+                    st.session_state
+                    .observability
+                ),
             )
         )
 
-    if "run_state" not in st.session_state:
+    if (
+        "run_state"
+        not in st.session_state
+    ):
 
         st.session_state.run_state = (
             None
@@ -61,6 +86,7 @@ Local Research Agent
 - Research Partner
 - Persistent Memory
 - Human Approval
+- Run Observability
 """
     )
 
@@ -81,6 +107,19 @@ Local Research Agent
         len(episodes),
     )
 
+    runs = (
+        st.session_state
+        .observability
+        .list_runs(
+            limit=1000
+        )
+    )
+
+    st.sidebar.metric(
+        "Recorded Runs",
+        len(runs),
+    )
+
     run_state = (
         st.session_state.run_state
     )
@@ -90,6 +129,11 @@ Local Research Agent
         st.sidebar.metric(
             "Current Status",
             run_state.status,
+        )
+
+        st.sidebar.caption(
+            f"Run ID: "
+            f"{run_state.run_id}"
         )
 
 
@@ -112,18 +156,23 @@ def main():
     )
 
     st.caption(
-        "A local, persistent, "
-        "human-governed research agent"
+        "Local, persistent, "
+        "human-governed and observable "
+        "research agent"
     )
 
-    research_tab, results_tab, memory_tab = (
-        st.tabs(
-            [
-                "Research",
-                "Results",
-                "Memory",
-            ]
-        )
+    (
+        research_tab,
+        results_tab,
+        memory_tab,
+        runs_tab,
+    ) = st.tabs(
+        [
+            "Research",
+            "Results",
+            "Memory",
+            "Runs",
+        ]
     )
 
     with research_tab:
@@ -154,6 +203,15 @@ def main():
             agent=(
                 st.session_state
                 .agent
+            )
+        )
+
+    with runs_tab:
+
+        render_runs_view(
+            observability=(
+                st.session_state
+                .observability
             )
         )
 

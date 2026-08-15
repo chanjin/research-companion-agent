@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from research_companion.state import (
-    ResearchState,
     PaperReadingState,
     ResearchAnalysisState,
     ResearchPartnerState,
+    ResearchState,
 )
 
 
@@ -24,13 +24,8 @@ VALID_RUN_STATUSES = {
 
 @dataclass
 class AgentRunState:
-    """
-    Research Companion 전체 Workflow의
-    상위 실행 상태.
 
-    각 Job의 세부 State를 내부에 보유하며,
-    전체 실행 위치와 상태를 관리한다.
-    """
+    run_id: str = ""
 
     user_request: str = ""
 
@@ -44,17 +39,17 @@ class AgentRunState:
 
     status: str = "created"
 
-    # -----------------------------------
+    # ===================================
     # Memory
-    # -----------------------------------
+    # ===================================
 
     recalled_memory: list = field(
         default_factory=list
     )
 
-    # -----------------------------------
+    # ===================================
     # Job States
-    # -----------------------------------
+    # ===================================
 
     search_state: Optional[
         ResearchState
@@ -74,17 +69,19 @@ class AgentRunState:
         ResearchPartnerState
     ] = None
 
-    # -----------------------------------
-    # Human Gate
-    # -----------------------------------
+    # ===================================
+    # Human Decision
+    # ===================================
 
     pending_human_decision: bool = False
 
-    human_decision_id: Optional[str] = None
+    human_decision_id: Optional[
+        str
+    ] = None
 
-    # -----------------------------------
+    # ===================================
     # Error
-    # -----------------------------------
+    # ===================================
 
     error: Optional[str] = None
 
@@ -93,10 +90,12 @@ class AgentRunState:
         status: str,
     ) -> None:
 
-        if status not in VALID_RUN_STATUSES:
-
+        if status not in (
+            VALID_RUN_STATUSES
+        ):
             raise ValueError(
-                f"Invalid run status: {status}"
+                f"Invalid run status: "
+                f"{status}"
             )
 
         self.status = status

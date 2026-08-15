@@ -47,19 +47,19 @@ def render_memory_view(
         ):
 
             st.write(
-                "**Timestamp:**",
-                episode.timestamp,
+                f"**Timestamp:** episode.timestamp,",
+                
             )
 
             st.write(
-                "**Source:**",
-                episode.source
-                or "unknown",
+                f"**Source:** {episode.source
+                                or "unknown"},",
+                
             )
 
             st.write(
-                "**Importance:**",
-                episode.importance,
+                f"**Importance:**  {episode.importance,}",
+               
             )
 
             st.write(
