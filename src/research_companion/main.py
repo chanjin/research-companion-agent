@@ -1,106 +1,258 @@
-#from llm import ask_llm
-from research_companion.agent import ResearchCompanionAgent
+# src/research_companion/main.py
 
-def main():
-    agent = ResearchCompanionAgent()
+from research_companion.agent import (
+    ResearchCompanionAgent,
+)
 
-    research_question = (
-        "에이전트를 고정된 절차적 워크플로우의 실행 노드가 아닌 명확한 직무 경계(Scope)와 책임을 가진 독립 주체로 정의할 때, 예기치 않은 시스템 오작동(월권 행동, 프롬프트 이탈)을 얼마나 효과적으로 통제할 수 있는가?"
-    )
 
-    state = agent.search_literature(
-        research_question=research_question,
-        max_results=15,
-        top_n=5,        
-    )
-
-    print("=" * 60)
-    print("Research Question")
-    print("=" * 60)
-    print(state.research_question)
+def print_research_synthesis(
+    analysis_state,
+) -> None:
 
     print()
+    print("=" * 70)
+    print("RESEARCH ANALYST")
+    print("=" * 70)
 
-    print("=" * 60)
-    print("Search Query")
-    print("=" * 60)
-    print(state.search_query)
+    if analysis_state.error:
 
+        print()
+        print("Research Analyst failed:")
+        print(analysis_state.error)
 
-    print("=" * 60)
-    print("Workflow Summary")
-    print("=" * 60)
+        return
+
+    synthesis = (
+        analysis_state.synthesis
+    )
+
+    sections = [
+        (
+            "Major Themes",
+            "major_themes",
+        ),
+        (
+            "Common Problems",
+            "common_problems",
+        ),
+        (
+            "Common Methods",
+            "common_methods",
+        ),
+        (
+            "Methodological Differences",
+            "methodological_differences",
+        ),
+        (
+            "Common Findings",
+            "common_findings",
+        ),
+        (
+            "Recurring Limitations",
+            "recurring_limitations",
+        ),
+        (
+            "Research Trends",
+            "research_trends",
+        ),
+        (
+            "Implications for Current RQ",
+            "implications_for_current_rq",
+        ),
+    ]
+
+    for title, key in sections:
+
+        print()
+        print("-" * 70)
+        print(title)
+        print("-" * 70)
+
+        items = synthesis.get(
+            key,
+            [],
+        )
+
+        for index, item in enumerate(
+            items,
+            start=1,
+        ):
+            print(
+                f"{index}. {item}"
+            )
 
     print()
+    print("-" * 70)
+    print("Research Gaps")
+    print("-" * 70)
 
-    print(
-        "Candidate Papers:",
-        len(state.candidate_papers),
+    gaps = synthesis.get(
+        "research_gaps",
+        [],
     )
 
-    print(
-        "After Deduplication:",
-        len(state.deduplicated_papers),
-    )
-
-    print(
-        "Evaluated Papers:",
-        len(state.evaluated_papers),
-    )
-
-    print(
-        "Selected Papers:",
-        len(state.selected_papers),
-    )
-
-    print()
-
-
-    print("=" * 60)
-    print("Selected Papers")
-    print("=" * 60)
-
-
-    for index, paper in enumerate(
-        state.selected_papers,
+    for index, gap in enumerate(
+        gaps,
         start=1,
     ):
+
         print()
-        print(f"[{index}] {paper['title']}")
-        print("Score:", paper["relevance_score"],  )
-        print("Reason:", paper["relevance_reason"],  )
-
         print(
-            "Authors:",
-            ", ".join(paper["authors"])
+            f"Gap {index}: "
+            f"{gap.get('gap', '')}"
         )
 
         print(
-            "Published:",
-            paper["published"]
+            "Evidence:",
+            gap.get(
+                "evidence",
+                "",
+            ),
         )
 
         print(
-            "URL:",
-            paper["url"]
+            "Confidence:",
+            gap.get(
+                "confidence",
+                "",
+            ),
         )
 
     print()
-
-    print("=" * 60)
-    print("Specification Validation")
-    print("=" * 60)
-
+    print("=" * 70)
 
     print(
-        "Satisfied:",
-        state.specification_satisfied,
+        "Specification Satisfied:",
+        analysis_state.specification_satisfied,
     )
 
     print(
         "Final Workflow State:",
-        state.current_step,
+        analysis_state.current_step,
     )
+
+
+def main():
+
+    agent = ResearchCompanionAgent()
+
+    research_question = (
+        "에이전트를 고정된 절차적 워크플로우의 "
+        "실행 노드가 아닌 명확한 직무 경계(Scope), "
+        "책임과 권한을 가진 독립 주체로 정의할 때, "
+        "월권 행동이나 프롬프트 이탈과 같은 "
+        "예기치 않은 시스템 오작동을 얼마나 "
+        "효과적으로 통제할 수 있는가?"
+    )
+
+    # =======================================
+    # Job 1. Literature Scout
+    # =======================================
+
+    search_state = (
+        agent.search_literature(
+            research_question=research_question,
+            max_results=5,
+            top_n=5,
+        )
+    )
+
+    if not search_state.selected_papers:
+
+        print(
+            "No papers were selected."
+        )
+
+        return
+
+    # =======================================
+    # Job 2. Paper Reader
+    # =======================================
+
+    paper_analyses = []
+
+    for index, paper in enumerate(
+        search_state.selected_papers[:3],
+        start=1,
+    ):
+
+        print()
+        print("=" * 70)
+        print(
+            f"READING PAPER {index}"
+        )
+        print("=" * 70)
+
+        print(
+            paper["title"]
+        )
+
+        reading_state = (
+            agent.read_paper(
+                paper=paper,
+                research_question=(
+                    research_question
+                ),
+                max_pages=8,
+            )
+        )
+
+        if (
+            reading_state
+            .specification_satisfied
+        ):
+
+            paper_analyses.append(
+                reading_state.analysis
+            )
+
+            print(
+                "Paper analysis complete."
+            )
+
+        else:
+
+            print(
+                "Paper analysis failed "
+                "or needs retry."
+            )
+
+            if reading_state.error:
+                print(
+                    reading_state.error
+                )
+
+    # =======================================
+    # 최소 Evidence 확인
+    # =======================================
+
+    if len(paper_analyses) < 2:
+
+        print()
+        print(
+            "Not enough successfully analyzed "
+            "papers for cross-paper synthesis."
+        )
+
+        return
+
+    # =======================================
+    # Job 3. Research Analyst
+    # =======================================
+
+    analysis_state = (
+        agent.analyze_research_landscape(
+            research_question=(
+                research_question
+            ),
+            paper_analyses=paper_analyses,
+        )
+    )
+
+    print_research_synthesis(
+        analysis_state
+    )
+
 
 if __name__ == "__main__":
     main()

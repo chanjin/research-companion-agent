@@ -4,7 +4,11 @@ import ollama
 
 MODEL = "gemma4:e4b"
 
-def ask_llm(system_prompt: str, user_prompt: str) -> str:
+def ask_llm(
+    system_prompt: str,
+    user_prompt: str,
+) -> str:
+
     response = ollama.chat(
         model=MODEL,
         messages=[
@@ -19,4 +23,8 @@ def ask_llm(system_prompt: str, user_prompt: str) -> str:
         ],
     )
 
-    return response["message"]["content"]
+    return response[
+        "message"
+    ][
+        "content"
+    ].strip()
