@@ -5,11 +5,17 @@ import streamlit as st
 from research_companion.agent import (
     ResearchCompanionAgent,
 )
+from research_companion.evaluation.service import (
+    EvaluationService,
+)
 from research_companion.observability.service import (
     ObservabilityService,
 )
 from research_companion.orchestration.orchestrator import (
     ResearchOrchestrator,
+)
+from research_companion.ui.evaluation_view import (
+    render_evaluation_view,
 )
 from research_companion.ui.memory_view import (
     render_memory_view,
@@ -27,11 +33,19 @@ from research_companion.ui.runs_view import (
 
 def initialize_session_state():
 
+    # ===================================
+    # Agent
+    # ===================================
+
     if "agent" not in st.session_state:
 
         st.session_state.agent = (
             ResearchCompanionAgent()
         )
+
+    # ===================================
+    # Observability
+    # ===================================
 
     if (
         "observability"
@@ -42,6 +56,10 @@ def initialize_session_state():
             ObservabilityService()
         )
 
+    # ===================================
+    # Orchestrator
+    # ===================================
+
     if (
         "orchestrator"
         not in st.session_state
@@ -50,8 +68,7 @@ def initialize_session_state():
         st.session_state.orchestrator = (
             ResearchOrchestrator(
                 agent=(
-                    st.session_state
-                    .agent
+                    st.session_state.agent
                 ),
                 observability=(
                     st.session_state
@@ -59,6 +76,28 @@ def initialize_session_state():
                 ),
             )
         )
+
+    # ===================================
+    # Evaluation Service
+    # ===================================
+
+    if (
+        "evaluation_service"
+        not in st.session_state
+    ):
+
+        st.session_state.evaluation_service = (
+            EvaluationService(
+                observability=(
+                    st.session_state
+                    .observability
+                )
+            )
+        )
+
+    # ===================================
+    # Current Run
+    # ===================================
 
     if (
         "run_state"
@@ -68,6 +107,28 @@ def initialize_session_state():
         st.session_state.run_state = (
             None
         )
+
+    # ===================================
+    # Current Evaluation
+    # ===================================
+
+    if (
+        "evaluation_report"
+        not in st.session_state
+    ):
+
+        st.session_state[
+            "evaluation_report"
+        ] = None
+
+    if (
+        "evaluation_run_id"
+        not in st.session_state
+    ):
+
+        st.session_state[
+            "evaluation_run_id"
+        ] = None
 
 
 def render_sidebar():
@@ -87,6 +148,7 @@ Local Research Agent
 - Persistent Memory
 - Human Approval
 - Run Observability
+- Specification Evaluation
 """
     )
 
@@ -132,8 +194,7 @@ Local Research Agent
         )
 
         st.sidebar.caption(
-            f"Run ID: "
-            f"{run_state.run_id}"
+            f"Run ID: {run_state.run_id}"
         )
 
 
@@ -156,9 +217,12 @@ def main():
     )
 
     st.caption(
-        "Local, persistent, "
-        "human-governed and observable "
-        "research agent"
+        (
+            "Local, persistent, "
+            "human-governed, observable "
+            "and specification-evaluated "
+            "research agent"
+        )
     )
 
     (
@@ -166,12 +230,14 @@ def main():
         results_tab,
         memory_tab,
         runs_tab,
+        evaluation_tab,
     ) = st.tabs(
         [
             "Research",
             "Results",
             "Memory",
             "Runs",
+            "Evaluation",
         ]
     )
 
@@ -213,6 +279,19 @@ def main():
                 st.session_state
                 .observability
             )
+        )
+
+    with evaluation_tab:
+
+        render_evaluation_view(
+            observability=(
+                st.session_state
+                .observability
+            ),
+            evaluation_service=(
+                st.session_state
+                .evaluation_service
+            ),
         )
 
 
