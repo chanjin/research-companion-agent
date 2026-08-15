@@ -687,3 +687,15 @@ URL:
             research_question=research_question,
             research_synthesis=research_synthesis,
         )
+    # agent.py 내부에 추가
+
+    def create_orchestrator(
+        self,
+    ):
+        from research_companion.orchestration.orchestrator import (
+            ResearchOrchestrator,
+        )
+
+        return ResearchOrchestrator(
+            self
+        )

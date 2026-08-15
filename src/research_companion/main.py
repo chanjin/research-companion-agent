@@ -3,9 +3,17 @@
 from research_companion.agent import (
     ResearchCompanionAgent,
 )
+from research_companion.orchestration.orchestrator import (
+    ResearchOrchestrator,
+)
 
 
-ORIGINAL_RESEARCH_QUESTION = (
+RESEARCH_TOPIC = (
+    "Job-bounded AI Agent Governance"
+)
+
+
+RESEARCH_QUESTION = (
     "에이전트를 고정된 절차적 워크플로우의 "
     "실행 노드가 아닌 명확한 직무 경계(Scope), "
     "책임(Responsibility), 권한(Authority)을 가진 "
@@ -15,13 +23,77 @@ ORIGINAL_RESEARCH_QUESTION = (
 )
 
 
-def show_candidate_research_questions(
-    proposal: dict,
+USER_REQUEST = (
+    "현재 연구 질문과 관련된 문헌을 조사하고, "
+    "핵심 연구 Gap을 분석한 뒤 "
+    "다음 연구 방향을 제안해줘."
+)
+
+
+def print_run_summary(
+    state,
+) -> None:
+
+    print()
+    print("=" * 70)
+    print("RESEARCH COMPANION RUN")
+    print("=" * 70)
+
+    print(
+        "Status:",
+        state.status,
+    )
+
+    print(
+        "Current Job:",
+        state.current_job,
+    )
+
+    print(
+        "Current Step:",
+        state.current_step,
+    )
+
+    print(
+        "Research Question:"
+    )
+
+    print(
+        state.research_question
+    )
+
+    if state.error:
+
+        print()
+        print(
+            "Error:"
+        )
+
+        print(
+            state.error
+        )
+
+
+def print_partner_candidates(
+    state,
 ) -> list[dict]:
 
-    candidates = proposal.get(
-        "refined_research_questions",
-        [],
+    if (
+        state.partner_state
+        is None
+    ):
+        return []
+
+    proposal = (
+        state.partner_state
+        .proposal
+    )
+
+    candidates = (
+        proposal.get(
+            "refined_research_questions",
+            [],
+        )
     )
 
     print()
@@ -29,19 +101,20 @@ def show_candidate_research_questions(
     print("CANDIDATE RESEARCH QUESTIONS")
     print("=" * 70)
 
-    for index, item in enumerate(
+    for index, candidate in enumerate(
         candidates,
         start=1,
     ):
 
         print()
         print(
-            f"[{index}] {item.get('rq', '')}"
+            f"[{index}] "
+            f"{candidate.get('rq', '')}"
         )
 
         print(
             "Rationale:",
-            item.get(
+            candidate.get(
                 "rationale",
                 "",
             ),
@@ -56,34 +129,43 @@ def get_candidate_index(
 
     while True:
 
-        raw = input(
-            "\nSelect a candidate number: "
+        raw_value = input(
+            "\nSelect candidate number: "
         ).strip()
 
         try:
-            selected = int(raw)
+
+            selected = int(
+                raw_value
+            )
 
         except ValueError:
+
             print(
                 "Please enter a number."
             )
+
             continue
 
         if (
             selected < 1
-            or selected > len(candidates)
+            or selected > len(
+                candidates
+            )
         ):
+
             print(
                 "Invalid candidate number."
             )
+
             continue
 
         return selected - 1
 
 
-def get_decision() -> str:
+def get_human_decision() -> str:
 
-    valid = {
+    valid_decisions = {
         "approve",
         "reject",
         "revise",
@@ -92,88 +174,107 @@ def get_decision() -> str:
 
     while True:
 
-        decision = input(
+        value = input(
             "\nDecision "
             "(approve/reject/revise/defer): "
         ).strip().lower()
 
-        if decision in valid:
-            return decision
+        if value in valid_decisions:
+
+            return value
 
         print(
             "Invalid decision."
         )
 
 
-def demonstrate_human_decision():
+def main():
 
-    agent = ResearchCompanionAgent()
+    # ===================================
+    # Agent
+    # ===================================
 
-    agent.set_research_context(
-        topic="Job-bounded AI Agents",
-        research_question=(
-            ORIGINAL_RESEARCH_QUESTION
-        ),
+    agent = (
+        ResearchCompanionAgent()
     )
 
     # ===================================
-    # M10 실습에서는 Research Partner의
-    # 기존 결과가 있다고 가정한다.
-    #
-    # 실제 M8 pipeline 결과로 교체 가능하다.
+    # Orchestrator
     # ===================================
 
-    example_proposal = {
-        "refined_research_questions": [
-            {
-                "rq": (
-                    "Do explicit Scope, "
-                    "Responsibility, and Authority "
-                    "boundaries reduce unauthorized "
-                    "actions in autonomous AI agents?"
-                ),
-                "rationale": (
-                    "This RQ focuses directly on "
-                    "measurable authority violations."
-                ),
-            },
-            {
-                "rq": (
-                    "How do job-bounded AI agents "
-                    "compare with fixed workflow-node "
-                    "agents in controlling scope "
-                    "violations and prompt deviation?"
-                ),
-                "rationale": (
-                    "This creates a direct architectural "
-                    "comparison."
-                ),
-            },
-            {
-                "rq": (
-                    "Which combinations of role, scope, "
-                    "and authority constraints most "
-                    "effectively reduce unintended "
-                    "agent behavior?"
-                ),
-                "rationale": (
-                    "This focuses on individual "
-                    "governance mechanisms."
-                ),
-            },
-        ]
-    }
+    orchestrator = (
+        ResearchOrchestrator(
+            agent
+        )
+    )
+
+    # ===================================
+    # Automatic Agent Workflow
+    # ===================================
+
+    state = orchestrator.run(
+        user_request=(
+            USER_REQUEST
+        ),
+        research_topic=(
+            RESEARCH_TOPIC
+        ),
+        research_question=(
+            RESEARCH_QUESTION
+        ),
+
+        # 각 검색 query당 최대 5편
+        max_results_per_query=5,
+
+        # Literature Scout 최종 선택
+        top_n=5,
+
+        # M11 실습에서는 3편 읽기
+        papers_to_read=3,
+
+        # 로컬 LLM 부담 제한
+        max_pages_per_paper=8,
+    )
+
+    print_run_summary(
+        state
+    )
+
+    # ===================================
+    # Workflow가 Human Gate에
+    # 도달하지 못한 경우 종료
+    # ===================================
+
+    if (
+        state.status
+        != "waiting_for_human"
+    ):
+
+        print()
+        print(
+            "Workflow stopped before "
+            "human review."
+        )
+
+        return
+
+    # ===================================
+    # Human Approval Gate
+    # ===================================
 
     candidates = (
-        show_candidate_research_questions(
-            example_proposal
+        print_partner_candidates(
+            state
         )
     )
 
     if not candidates:
+
         print(
-            "No candidates available."
+            "No candidate research "
+            "questions available."
         )
+
         return
 
     candidate_index = (
@@ -182,46 +283,34 @@ def demonstrate_human_decision():
         )
     )
 
-    selected_candidate = (
-        candidates[
-            candidate_index
-        ]
-    )
-
-    original_content = (
-        selected_candidate[
-            "rq"
-        ]
-    )
-
-    decision_value = (
-        get_decision()
+    decision = (
+        get_human_decision()
     )
 
     revised_content = None
 
-    if decision_value == "revise":
+    if decision == "revise":
 
         revised_content = input(
             "\nEnter revised research question:\n> "
         ).strip()
 
     reason = input(
-        "\nReason for this decision:\n> "
+        "\nReason for decision:\n> "
     ).strip()
 
     # ===================================
-    # Human Decision 생성 및 적용
+    # Resume Workflow
     # ===================================
 
-    decision = (
-        agent.make_research_decision(
-            decision_type="rq_selection",
-            target_type="research_question",
-            decision=decision_value,
-            original_content=(
-                original_content
+    state = (
+        orchestrator
+        .apply_human_decision(
+            state=state,
+            candidate_index=(
+                candidate_index
             ),
+            decision=decision,
             revised_content=(
                 revised_content
             ),
@@ -230,87 +319,45 @@ def demonstrate_human_decision():
     )
 
     # ===================================
-    # 결과 출력
+    # Final Status
     # ===================================
 
     print()
     print("=" * 70)
-    print("RESEARCH DECISION")
+    print("FINAL RUN STATUS")
     print("=" * 70)
 
     print(
-        "Decision:",
-        decision.decision,
+        "Status:",
+        state.status,
     )
 
     print(
-        "Original:",
-        decision.original_content,
+        "Current Step:",
+        state.current_step,
     )
 
-    if decision.revised_content:
+    print(
+        "Current Research Question:"
+    )
+
+    print(
+        state.research_question
+    )
+
+    if state.human_decision_id:
 
         print(
-            "Revised:",
-            decision.revised_content,
+            "Decision ID:",
+            state.human_decision_id,
         )
 
-    print(
-        "Reason:",
-        decision.reason,
-    )
-
-    print()
-    print("=" * 70)
-    print("CURRENT RESEARCH CONTEXT")
-    print("=" * 70)
-
-    print(
-        "Current RQ:"
-    )
-
-    print(
-        agent.research_question
-    )
-
-    # ===================================
-    # Memory 확인
-    # ===================================
-
-    print()
-    print("=" * 70)
-    print("RECENT EPISODIC MEMORY")
-    print("=" * 70)
-
-    episodes = (
-        agent.memory.recall(
-            limit=5
-        )
-    )
-
-    for index, episode in enumerate(
-        episodes,
-        start=1,
-    ):
-
-        print()
-        print(
-            f"[{index}] "
-            f"{episode.episode_type}"
-        )
+    if state.error:
 
         print(
-            episode.summary
+            "Error:",
+            state.error,
         )
-
-        print(
-            episode.details
-        )
-
-
-def main():
-
-    demonstrate_human_decision()
 
 
 if __name__ == "__main__":
