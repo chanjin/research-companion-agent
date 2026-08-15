@@ -244,3 +244,9 @@ logs/
 token.tk
 .env
 실행스크립트
+
+
+# Persistent local memory
+data/memory/*.db
+data/memory/*.sqlite
+data/memory/*.sqlite3

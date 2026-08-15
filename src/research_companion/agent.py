@@ -18,10 +18,17 @@ from research_companion.jobs.research_partner import (
     ResearchPartner,
 )
 
+from research_companion.memory.service import (
+    MemoryService,
+)
+
 
 class ResearchCompanionAgent:
 
-    def __init__(self):
+    def __init__(
+        self,
+        memory_service: MemoryService | None = None,
+    ):
 
         # ===================================
         # Static Agent Specification
@@ -38,48 +45,28 @@ class ResearchCompanionAgent:
         )
 
         # ===================================
-        # Paper Reader Specification
+        # Job Specifications
         # ===================================
 
-        paper_reader_prompt_path = Path(
+        self.paper_reader_prompt = Path(
             "prompts/paper_reader/"
             "analyze_paper.md"
+        ).read_text(
+            encoding="utf-8"
         )
 
-        self.paper_reader_prompt = (
-            paper_reader_prompt_path.read_text(
-                encoding="utf-8"
-            )
-        )
-
-        # ===================================
-        # Research Analyst Specification
-        # ===================================
-
-        research_analyst_prompt_path = Path(
+        self.research_analyst_prompt = Path(
             "prompts/research_analyst/"
             "synthesize_research.md"
+        ).read_text(
+            encoding="utf-8"
         )
 
-        self.research_analyst_prompt = (
-            research_analyst_prompt_path.read_text(
-                encoding="utf-8"
-            )
-        )
-
-        # ===================================
-        # Research Partner Specification
-        # ===================================
-
-        research_partner_prompt_path = Path(
+        self.research_partner_prompt = Path(
             "prompts/research_partner/"
             "propose_research.md"
-        )
-
-        self.research_partner_prompt = (
-            research_partner_prompt_path.read_text(
-                encoding="utf-8"
-            )
+        ).read_text(
+            encoding="utf-8"
         )
 
         # ===================================
@@ -88,6 +75,16 @@ class ResearchCompanionAgent:
 
         self.research_topic = None
         self.research_question = None
+
+        # ===================================
+        # Persistent Episodic Memory
+        # ===================================
+
+        self.memory = (
+            memory_service
+            if memory_service is not None
+            else MemoryService()
+        )
 
         # ===================================
         # Jobs
@@ -120,9 +117,48 @@ class ResearchCompanionAgent:
     ) -> None:
 
         self.research_topic = topic
-
         self.research_question = (
             research_question
+        )
+
+    # =======================================
+    # Episodic Memory Interface
+    # =======================================
+
+    def remember_research_event(
+        self,
+        episode_type: str,
+        summary: str,
+        details: str,
+        research_question: str | None = None,
+        source: str | None = None,
+        importance: int = 3,
+    ):
+
+        return self.memory.remember(
+            episode_type=episode_type,
+            summary=summary,
+            details=details,
+            research_question=(
+                research_question
+                or self.research_question
+            ),
+            source=source,
+            importance=importance,
+        )
+
+    def recall_research_memory(
+        self,
+        research_question: str | None = None,
+        limit: int = 5,
+    ):
+
+        return self.memory.recall(
+            research_question=(
+                research_question
+                or self.research_question
+            ),
+            limit=limit,
         )
 
     # =======================================
@@ -134,6 +170,15 @@ class ResearchCompanionAgent:
         user_input: str,
     ) -> str:
 
+        memory_context = (
+            self.memory.build_memory_context(
+                research_question=(
+                    self.research_question
+                ),
+                limit=5,
+            )
+        )
+
         dynamic_context = f"""
 # Current Research Context
 
@@ -142,6 +187,10 @@ Research Topic:
 
 Research Question:
 {self.research_question or "Not specified"}
+
+# Relevant Episodic Memory
+
+{memory_context}
 
 # Current Request
 
@@ -162,33 +211,34 @@ Research Question:
         research_question: str,
     ) -> list[str]:
 
+        memory_context = (
+            self.memory.build_memory_context(
+                research_question=(
+                    research_question
+                ),
+                limit=3,
+            )
+        )
+
         prompt = f"""
 # Current Job
 
 Literature Scout
 
-# Task
-
-Prepare an academic literature search strategy
-for the research question below.
-
 # Research Question
 
 {research_question}
 
-# Instructions
+# Relevant Episodic Memory
 
-Do NOT generate one overly restrictive
-Boolean query.
+{memory_context}
+
+# Task
+
+Prepare an academic literature search strategy.
 
 Generate complementary search queries covering
 different conceptual dimensions.
-
-Include:
-
-- broad discovery queries
-- related academic terminology
-- narrower focused queries
 
 Avoid excessive AND operators.
 
@@ -255,16 +305,6 @@ Title:
 Abstract:
 {paper.get("abstract", "")}
 
-# Evaluation Criteria
-
-Evaluate based on:
-
-1. agent architecture relevance
-2. role, scope, responsibility or authority relevance
-3. governance or behavioral control relevance
-4. unintended or unauthorized behavior relevance
-5. usefulness as evidence for the research question
-
 # Required Output
 
 Return valid JSON only.
@@ -275,8 +315,6 @@ Return valid JSON only.
 }}
 
 Score must be between 1 and 5.
-
-Do not include Markdown.
 """.strip()
 
         response = ask_llm(
@@ -369,7 +407,6 @@ URL:
         )
 
         try:
-
             return json.loads(
                 response
             )
@@ -443,7 +480,6 @@ URL:
         )
 
         try:
-
             return json.loads(
                 response
             )
@@ -478,12 +514,25 @@ URL:
             indent=2,
         )
 
+        memory_context = (
+            self.memory.build_memory_context(
+                research_question=(
+                    research_question
+                ),
+                limit=5,
+            )
+        )
+
         user_prompt = f"""
 {self.research_partner_prompt}
 
 # Current Research Question
 
 {research_question}
+
+# Relevant Past Research Experience
+
+{memory_context}
 
 # Research Analyst Synthesis
 
@@ -496,7 +545,6 @@ URL:
         )
 
         try:
-
             return json.loads(
                 response
             )

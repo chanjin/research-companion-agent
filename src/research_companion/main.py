@@ -5,464 +5,202 @@ from research_companion.agent import (
 )
 
 
-def print_research_partner_proposal(
-    partner_state,
-) -> None:
+RESEARCH_QUESTION = (
+    "에이전트를 고정된 절차적 워크플로우의 "
+    "실행 노드가 아닌 명확한 직무 경계(Scope), "
+    "책임(Responsibility), 권한(Authority)을 가진 "
+    "독립 주체로 정의할 때, 월권 행동이나 "
+    "프롬프트 이탈과 같은 예기치 않은 시스템 "
+    "오작동을 얼마나 효과적으로 통제할 수 있는가?"
+)
+
+
+def print_episodes(
+    episodes,
+):
 
     print()
     print("=" * 70)
-    print("RESEARCH PARTNER")
+    print("EPISODIC MEMORY")
     print("=" * 70)
 
-    if partner_state.error:
-
-        print()
-        print(
-            "Research Partner failed:"
-        )
+    if not episodes:
 
         print(
-            partner_state.error
+            "No episodes found."
         )
 
         return
 
-    proposal = (
-        partner_state.proposal
-    )
-
-    # ===================================
-    # RQ Assessment
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("RQ Assessment")
-    print("-" * 70)
-
-    rq_assessment = proposal.get(
-        "rq_assessment",
-        {},
-    )
-
-    print(
-        "Assessment:",
-        rq_assessment.get(
-            "assessment",
-            "",
-        ),
-    )
-
-    print(
-        "Reason:",
-        rq_assessment.get(
-            "reason",
-            "",
-        ),
-    )
-
-    # ===================================
-    # Selected Gaps
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Selected Research Gaps")
-    print("-" * 70)
-
-    for index, gap in enumerate(
-        proposal.get(
-            "selected_gaps",
-            [],
-        ),
+    for index, episode in enumerate(
+        episodes,
         start=1,
     ):
 
         print()
         print(
-            f"Gap {index}:",
-            gap.get(
-                "gap",
-                "",
-            ),
+            f"[{index}] {episode.episode_type}"
         )
 
         print(
-            "Why Relevant:",
-            gap.get(
-                "why_relevant",
-                "",
-            ),
+            "Timestamp:",
+            episode.timestamp,
         )
 
         print(
-            "Confidence:",
-            gap.get(
-                "confidence",
-                "",
-            ),
-        )
-
-    # ===================================
-    # Refined RQs
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Refined Research Questions")
-    print("-" * 70)
-
-    for index, item in enumerate(
-        proposal.get(
-            "refined_research_questions",
-            [],
-        ),
-        start=1,
-    ):
-
-        print()
-        print(
-            f"{index}. {item.get('rq', '')}"
+            "Summary:",
+            episode.summary,
         )
 
         print(
-            "Rationale:",
-            item.get(
-                "rationale",
-                "",
-            ),
-        )
-
-    # ===================================
-    # Hypotheses
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Candidate Hypotheses")
-    print("-" * 70)
-
-    for index, item in enumerate(
-        proposal.get(
-            "candidate_hypotheses",
-            [],
-        ),
-        start=1,
-    ):
-
-        print()
-        print(
-            f"{index}. "
-            f"{item.get('hypothesis', '')}"
+            "Details:",
+            episode.details,
         )
 
         print(
-            "Related RQ:",
-            item.get(
-                "related_rq",
-                "",
-            ),
+            "Importance:",
+            episode.importance,
         )
-
-        print(
-            "Testability:",
-            item.get(
-                "testability",
-                "",
-            ),
-        )
-
-    # ===================================
-    # Research Designs
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Proposed Research Designs")
-    print("-" * 70)
-
-    for index, design in enumerate(
-        proposal.get(
-            "proposed_research_designs",
-            [],
-        ),
-        start=1,
-    ):
-
-        print()
-        print(
-            f"Design {index}:"
-        )
-
-        print(
-            design.get(
-                "design",
-                "",
-            )
-        )
-
-        print(
-            "Independent Variables:"
-        )
-
-        for item in design.get(
-            "independent_variables",
-            [],
-        ):
-            print(
-                f"- {item}"
-            )
-
-        print(
-            "Dependent Variables:"
-        )
-
-        for item in design.get(
-            "dependent_variables",
-            [],
-        ):
-            print(
-                f"- {item}"
-            )
-
-        print(
-            "Comparison:",
-            design.get(
-                "comparison",
-                "",
-            ),
-        )
-
-        print(
-            "Required Data:"
-        )
-
-        for item in design.get(
-            "required_data",
-            [],
-        ):
-            print(
-                f"- {item}"
-            )
-
-    # ===================================
-    # Evaluation Metrics
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Evaluation Metrics")
-    print("-" * 70)
-
-    for item in proposal.get(
-        "evaluation_metrics",
-        [],
-    ):
-        print(
-            f"- {item}"
-        )
-
-    # ===================================
-    # Risks
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Risks and Assumptions")
-    print("-" * 70)
-
-    for item in proposal.get(
-        "risks_and_assumptions",
-        [],
-    ):
-        print(
-            f"- {item}"
-        )
-
-    # ===================================
-    # Next Actions
-    # ===================================
-
-    print()
-    print("-" * 70)
-    print("Recommended Next Actions")
-    print("-" * 70)
-
-    for item in proposal.get(
-        "recommended_next_actions",
-        [],
-    ):
-        print(
-            f"- {item}"
-        )
-
-    print()
-    print("=" * 70)
-
-    print(
-        "Specification Satisfied:",
-        partner_state
-        .specification_satisfied,
-    )
-
-    print(
-        "Final Workflow State:",
-        partner_state.current_step,
-    )
 
 
 def main():
 
+    # =======================================
+    # Session 1
+    # =======================================
+
     agent = ResearchCompanionAgent()
 
-    research_question = (
-        "에이전트를 고정된 절차적 워크플로우의 "
-        "실행 노드가 아닌 명확한 직무 경계(Scope), "
-        "책임(Responsibility), 권한(Authority)을 가진 "
-        "독립 주체로 정의할 때, 월권 행동이나 "
-        "프롬프트 이탈과 같은 예기치 않은 시스템 "
-        "오작동을 얼마나 효과적으로 통제할 수 있는가?"
+    agent.set_research_context(
+        topic="Job-bounded AI Agents",
+        research_question=(
+            RESEARCH_QUESTION
+        ),
     )
 
-    # ===================================
-    # Job 1. Literature Scout
-    # ===================================
+    print()
+    print("=" * 70)
+    print("SESSION 1")
+    print("=" * 70)
 
-    search_state = (
-        agent.search_literature(
+    # -----------------------------------
+    # 연구자의 중요한 결정 저장
+    # -----------------------------------
+
+    episode = (
+        agent.remember_research_event(
+            episode_type=(
+                "research_decision"
+            ),
+            summary=(
+                "Focus on Scope, "
+                "Responsibility, and Authority."
+            ),
+            details=(
+                "The researcher decided to focus "
+                "on explicit job boundaries rather "
+                "than prompt-level guardrails alone."
+            ),
             research_question=(
-                research_question
+                RESEARCH_QUESTION
             ),
-            max_results=5,
-            top_n=5,
+            source="researcher",
+            importance=5,
         )
     )
 
-    if not search_state.selected_papers:
+    print()
+    print(
+        "Stored Episode:"
+    )
 
-        print(
-            "No papers were selected."
-        )
+    print(
+        episode.summary
+    )
 
-        return
+    # -----------------------------------
+    # RQ refinement decision
+    # -----------------------------------
 
-    # ===================================
-    # Job 2. Paper Reader
-    # ===================================
+    agent.remember_research_event(
+        episode_type="rq_revision",
+        summary=(
+            "Compare workflow-node agents "
+            "with job-bounded agents."
+        ),
+        details=(
+            "The proposed experiment will compare "
+            "a fixed workflow-node architecture "
+            "against an agent architecture with "
+            "explicit Scope, Responsibility, "
+            "and Authority boundaries."
+        ),
+        research_question=(
+            RESEARCH_QUESTION
+        ),
+        source="researcher",
+        importance=5,
+    )
 
-    paper_analyses = []
+    # =======================================
+    # Session 종료를 흉내 낸다.
+    # 새로운 Agent 객체 생성
+    # =======================================
 
-    for index, paper in enumerate(
-        search_state.selected_papers[:3],
-        start=1,
-    ):
+    print()
+    print("=" * 70)
+    print("SESSION 2")
+    print("=" * 70)
 
-        print()
-        print(
-            f"Reading paper {index}:"
-        )
+    new_agent = (
+        ResearchCompanionAgent()
+    )
 
-        print(
-            paper["title"]
-        )
+    new_agent.set_research_context(
+        topic="Job-bounded AI Agents",
+        research_question=(
+            RESEARCH_QUESTION
+        ),
+    )
 
-        reading_state = (
-            agent.read_paper(
-                paper=paper,
-                research_question=(
-                    research_question
-                ),
-                max_pages=8,
-            )
-        )
+    # -----------------------------------
+    # Persistent Memory Recall
+    # -----------------------------------
 
-        if (
-            reading_state
-            .specification_satisfied
-        ):
-
-            paper_analyses.append(
-                reading_state.analysis
-            )
-
-            print(
-                "Paper analysis complete."
-            )
-
-        else:
-
-            print(
-                "Paper analysis failed "
-                "or needs retry."
-            )
-
-            if reading_state.error:
-
-                print(
-                    reading_state.error
-                )
-
-    if len(paper_analyses) < 2:
-
-        print()
-        print(
-            "Not enough paper analyses "
-            "for Research Analyst."
-        )
-
-        return
-
-    # ===================================
-    # Job 3. Research Analyst
-    # ===================================
-
-    analysis_state = (
-        agent.analyze_research_landscape(
+    episodes = (
+        new_agent
+        .recall_research_memory(
             research_question=(
-                research_question
+                RESEARCH_QUESTION
             ),
-            paper_analyses=(
-                paper_analyses
-            ),
+            limit=5,
         )
     )
 
-    if not (
-        analysis_state
-        .specification_satisfied
-    ):
+    print_episodes(
+        episodes
+    )
 
-        print()
-        print(
-            "Research synthesis failed "
-            "or needs retry."
-        )
+    # -----------------------------------
+    # Recall된 기억을 LLM Context에 사용
+    # -----------------------------------
 
-        if analysis_state.error:
+    print()
+    print("=" * 70)
+    print("MEMORY-AWARE AGENT RESPONSE")
+    print("=" * 70)
 
-            print(
-                analysis_state.error
-            )
-
-        return
-
-    # ===================================
-    # Job 4. Research Partner
-    # ===================================
-
-    partner_state = (
-        agent.propose_research_direction(
-            research_question=(
-                research_question
-            ),
-            research_synthesis=(
-                analysis_state.synthesis
-            ),
+    response = new_agent.run(
+        (
+            "지난 연구 결정에 맞추어 "
+            "다음 연구 단계에서 가장 먼저 "
+            "해야 할 일을 제안해줘."
         )
     )
 
-    print_research_partner_proposal(
-        partner_state
+    print()
+    print(
+        response
     )
 
 
